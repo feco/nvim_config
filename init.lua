@@ -201,10 +201,10 @@ vim.keymap.set('t', '<Esc><Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' }
 --  Use CTRL+<hjkl> to switch between windows
 --
 --  See `:help wincmd` for a list of all window commands
-vim.keymap.set('n', '<C-h>', '<C-w><C-h>', { desc = 'Move focus to the left window' })
-vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right window' })
-vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
-vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
+-- vim.keymap.set('n', '<C-h>', '<C-w><C-h>', { desc = 'Move focus to the left window' })
+-- vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right window' })
+-- vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
+-- vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
 
 -- NOTE: Some terminals have colliding keymaps or are not able to send distinct keycodes
 -- vim.keymap.set("n", "<C-S-h>", "<C-w>H", { desc = "Move window to the left" })
@@ -212,10 +212,14 @@ vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper win
 -- vim.keymap.set("n", "<C-S-j>", "<C-w>J", { desc = "Move window to the lower" })
 -- vim.keymap.set("n", "<C-S-k>", "<C-w>K", { desc = "Move window to the upper" })
 
-vim.keymap.set('v', 'J', ":m '>+1<CR>gv=gv")
-vim.keymap.set('v', 'K', ":m '<-2<CR>gv=gv")
+vim.keymap.set('v', 'J', ":m '>+1<CR>gv=gv", { desc = 'Move selected lines up with indenting' })
+vim.keymap.set('v', 'K', ":m '<-2<CR>gv=gv", { desc = 'Move selected lines down with indenting' })
 
-vim.keymap.set('x', '<leader>p', '"_dP')
+-- Paste on data without loosing what was copied
+vim.keymap.set('x', '<leader>p', '"_dP', { desc = 'Paste without replacing the clipboard' })
+
+-- Open the file tree
+vim.keymap.set('n', '<leader>e', vim.cmd.Ex, { desc = 'Open the file tree' })
 
 -- [[ Basic Autocommands ]]
 --  See `:help lua-guide-autocommands`
@@ -447,6 +451,7 @@ require('lazy').setup({
       vim.keymap.set('n', '<leader>sd', builtin.diagnostics, { desc = '[S]earch [D]iagnostics' })
       vim.keymap.set('n', '<leader>sr', builtin.resume, { desc = '[S]earch [R]esume' })
       vim.keymap.set('n', '<leader>sig', builtin.git_files, { desc = '[S]earch [I]n [G]it' })
+      vim.keymap.set('n', '‹C-s>', builtin.git_files, { desc = '[S]earch [I]n [G]it' })
       vim.keymap.set('n', '<leader>s.', builtin.oldfiles, { desc = '[S]earch Recent Files ("." for repeat)' })
       vim.keymap.set('n', '<leader><leader>', builtin.buffers, { desc = '[ ] Find existing buffers' })
 
@@ -985,6 +990,64 @@ require('lazy').setup({
     --    - Incremental selection: Included, see `:help nvim-treesitter-incremental-selection-mod`
     --    - Show your current context: https://github.com/nvim-treesitter/nvim-treesitter-context
     --    - Treesitter + textobjects: https://github.com/nvim-treesitter/nvim-treesitter-textobjects
+  },
+  {
+    'ThePrimeagen/harpoon',
+    branch = 'harpoon2',
+    dependencies = { 'nvim-lua/plenary.nvim' },
+    config = function()
+      local harpoon = require 'harpoon'
+      harpoon:setup {}
+
+      vim.keymap.set('n', '<leader>a', function()
+        harpoon:list():add()
+      end, { desc = 'Harpoon [A]dd file' })
+      vim.keymap.set('n', '<leader>A', function()
+        harpoon:list():remove()
+      end, { desc = 'Harpoon remove file' })
+      vim.keymap.set('n', '<C-e>', function()
+        harpoon.ui:toggle_quick_menu(harpoon:list())
+      end, { desc = 'Harpoon toggle quick menu' })
+
+      vim.keymap.set('n', '<C-h>', function()
+        harpoon:list():select(1)
+      end, { desc = 'Harpoon select file 1' })
+      vim.keymap.set('n', '<C-j>', function()
+        harpoon:list():select(2)
+      end, { desc = 'Harpoon select file 2' })
+      vim.keymap.set('n', '<C-k>', function()
+        harpoon:list():select(3)
+      end, { desc = 'Harpoon select file 3' })
+      vim.keymap.set('n', '<C-l>', function()
+        harpoon:list():select(4)
+      end, { desc = 'Harpoon select file 4' })
+      vim.keymap.set('n', '<C-m>', function()
+        harpoon:list():select(5)
+      end, { desc = 'Harpoon select file 5' })
+
+      local conf = require('telescope.config').values
+      local function toggle_telescope(harpoon_files)
+        local file_paths = {}
+        for _, item in ipairs(harpoon_files.items) do
+          table.insert(file_paths, item.value)
+        end
+
+        require('telescope.pickers')
+          .new({}, {
+            prompt_title = 'Harpoon',
+            finder = require('telescope.finders').new_table {
+              results = file_paths,
+            },
+            previewer = conf.file_previewer {},
+            sorter = conf.generic_sorter {},
+          })
+          :find()
+      end
+
+      vim.keymap.set('n', '<C-e>', function()
+        toggle_telescope(harpoon:list())
+      end, { desc = 'Open harpoon window' })
+    end,
   },
 
   -- The following comments only work if you have downloaded the kickstart repo, not just copy pasted the
