@@ -221,6 +221,15 @@ vim.keymap.set('x', '<leader>p', '"_dP', { desc = 'Paste without replacing the c
 -- Open the file tree
 vim.keymap.set('n', '<leader>e', vim.cmd.Ex, { desc = 'Open the file tree' })
 
+-- Fix quickfix file selection
+vim.api.nvim_create_autocmd('FileType', {
+  pattern = 'qf',
+  command = 'nnoremap <buffer><silent> <CR> <CR>:cclose<CR>',
+})
+
+-- Yank the whole file
+vim.keymap.set('n', 'yag', ':%y<CR>', { noremap = true, desc = '[Y]ank [A]rround the current file' })
+
 -- [[ Basic Autocommands ]]
 --  See `:help lua-guide-autocommands`
 
@@ -451,7 +460,7 @@ require('lazy').setup({
       vim.keymap.set('n', '<leader>sd', builtin.diagnostics, { desc = '[S]earch [D]iagnostics' })
       vim.keymap.set('n', '<leader>sr', builtin.resume, { desc = '[S]earch [R]esume' })
       vim.keymap.set('n', '<leader>sig', builtin.git_files, { desc = '[S]earch [I]n [G]it' })
-      vim.keymap.set('n', '‹C-s>', builtin.git_files, { desc = '[S]earch [I]n [G]it' })
+      vim.keymap.set('n', '<C-s>', builtin.git_files, { desc = '[S]earch [I]n [G]it' })
       vim.keymap.set('n', '<leader>s.', builtin.oldfiles, { desc = '[S]earch Recent Files ("." for repeat)' })
       vim.keymap.set('n', '<leader><leader>', builtin.buffers, { desc = '[ ] Find existing buffers' })
 
@@ -708,9 +717,6 @@ require('lazy').setup({
         -- Python
         pyright = {},
 
-        -- TypeScript/JavaScript
-        ts_ls = {},
-
         -- Svelte
         svelte = {},
 
@@ -812,6 +818,7 @@ require('lazy').setup({
       },
     },
   },
+  { 'tpope/vim-fugitive' },
 
   { -- Autocompletion
     'saghen/blink.cmp',
@@ -922,10 +929,31 @@ require('lazy').setup({
         contrast = 'hard',
       }
       -- Load the colorscheme
-      vim.cmd.colorscheme 'gruvbox'
+      -- vim.cmd.colorscheme 'gruvbox'
     end,
   },
-
+  {
+    'rebelot/kanagawa.nvim',
+    priority = 1000,
+    config = function()
+      require('kanagawa').setup {
+        theme = 'dragon',
+        colors = {
+          palette = {
+            sumiInk0 = '#16181A',
+            sumiInk1 = '#181A1C',
+            sumiInk2 = '#1a1c1e',
+            sumiInk3 = '#1F2123',
+            sumiInk4 = '#2A2C2E',
+            sumiInk5 = '#36383A',
+            sumiInk6 = '#545658',
+            waveBlue1 = '#421624',
+          },
+        },
+      }
+      vim.cmd.colorscheme 'kanagawa'
+    end,
+  },
   -- Highlight todo, notes, etc in comments
   { 'folke/todo-comments.nvim', event = 'VimEnter', dependencies = { 'nvim-lua/plenary.nvim' }, opts = { signs = false } },
 
@@ -970,6 +998,10 @@ require('lazy').setup({
     'nvim-treesitter/nvim-treesitter',
     build = ':TSUpdate',
     main = 'nvim-treesitter.configs', -- Sets main module to use for opts
+    dependencies = {
+      -- Add nvim-treesitter-textobjects
+      'nvim-treesitter/nvim-treesitter-textobjects',
+    },
     -- [[ Configure Treesitter ]] See `:help nvim-treesitter`
     opts = {
       ensure_installed = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' },
@@ -983,6 +1015,78 @@ require('lazy').setup({
         additional_vim_regex_highlighting = { 'ruby' },
       },
       indent = { enable = true, disable = { 'ruby' } },
+
+      -- Add textobjects configuration
+      textobjects = {
+        select = {
+          enable = true,
+          lookahead = true, -- Automatically jump forward to textobj, similar to targets.vim
+          keymaps = {
+            -- Functions
+            ['af'] = '@function.outer',
+            ['if'] = '@function.inner',
+
+            -- Classes
+            ['ac'] = '@class.outer',
+            ['ic'] = '@class.inner',
+
+            -- Parameters/arguments
+            ['aa'] = '@parameter.outer',
+            ['ia'] = '@parameter.inner',
+
+            -- Loops
+            ['al'] = '@loop.outer',
+            ['il'] = '@loop.inner',
+
+            -- Conditionals
+            ['ai'] = '@conditional.outer',
+            ['ii'] = '@conditional.inner',
+
+            -- Blocks
+            ['ab'] = '@block.outer',
+            ['ib'] = '@block.inner',
+
+            -- Comments
+            ['a/'] = '@comment.outer',
+            ['i/'] = '@comment.outer', -- no inner for comment
+          },
+          -- Optionally set descriptions for WhichKey
+          selection_modes = {
+            ['@parameter.outer'] = 'v', -- charwise
+            ['@function.outer'] = 'V', -- linewise
+            ['@class.outer'] = 'V', -- linewise
+          },
+          include_surrounding_whitespace = true,
+        },
+        move = {
+          enable = true,
+          set_jumps = true, -- whether to set jumps in the jumplist
+          goto_next_start = {
+            [']f'] = '@function.outer',
+            [']c'] = '@class.outer',
+            [']a'] = '@parameter.inner',
+            [']l'] = '@loop.outer',
+          },
+          goto_next_end = {
+            [']F'] = '@function.outer',
+            [']C'] = '@class.outer',
+            [']A'] = '@parameter.inner',
+            [']L'] = '@loop.outer',
+          },
+          goto_previous_start = {
+            ['[f'] = '@function.outer',
+            ['[c'] = '@class.outer',
+            ['[a'] = '@parameter.inner',
+            ['[l'] = '@loop.outer',
+          },
+          goto_previous_end = {
+            ['[F'] = '@function.outer',
+            ['[C'] = '@class.outer',
+            ['[A'] = '@parameter.inner',
+            ['[L'] = '@loop.outer',
+          },
+        },
+      },
     },
     -- There are additional nvim-treesitter modules that you can use to interact
     -- with nvim-treesitter. You should go explore a few and see what interests you:
