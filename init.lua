@@ -218,8 +218,19 @@ vim.keymap.set('v', 'K', ":m '<-2<CR>gv=gv", { desc = 'Move selected lines down 
 -- Paste on data without loosing what was copied
 vim.keymap.set('x', '<leader>p', '"_dP', { desc = 'Paste without replacing the clipboard' })
 
--- Open the file tree
-vim.keymap.set('n', '<leader>e', vim.cmd.Ex, { desc = 'Open the file tree' })
+-- Toggle file tree with smart buffer switching
+local function toggle_filetree()
+  local filetype = vim.bo.filetype
+  if filetype == 'netrw' then
+    -- If we're in netrw, go back to the previous buffer
+    vim.cmd 'buffer #'
+  else
+    -- If we're not in netrw, open it
+    vim.cmd.Ex()
+  end
+end
+
+vim.keymap.set('n', '<leader>e', toggle_filetree, { desc = 'Toggle file tree' })
 
 -- Fix quickfix file selection
 vim.api.nvim_create_autocmd('FileType', {
