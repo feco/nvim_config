@@ -809,7 +809,7 @@ require('lazy').setup({
         -- Disable "format_on_save lsp_fallback" for languages that don't
         -- have a well standardized coding style. You can add additional
         -- languages here or re-enable it for the disabled ones.
-        local disable_filetypes = { c = true, cpp = true }
+        local disable_filetypes = { c = true, cpp = true, yml = true, yaml = true }
         if disable_filetypes[vim.bo[bufnr].filetype] then
           return nil
         else
@@ -1123,6 +1123,9 @@ require('lazy').setup({
       vim.keymap.set('n', '<C-e>', function()
         harpoon.ui:toggle_quick_menu(harpoon:list())
       end, { desc = 'Harpoon toggle quick menu' })
+      vim.keymap.set('n', '<C-a>', function()
+        harpoon:list():clear()
+      end, { desc = 'Harpoon [A]dd [C]lear all files' })
 
       vim.keymap.set('n', '<C-h>', function()
         harpoon:list():select(1)
